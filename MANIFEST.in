@@ -1,0 +1,3 @@
+
+include README README.rst NEWS NEWS.rst LICENSE demo/Makefile demo/conf.py demo/*.rst
+
