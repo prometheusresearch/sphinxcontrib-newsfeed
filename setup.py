@@ -6,15 +6,15 @@
 from setuptools import setup
 
 
-NAME = "sphinxcontrib-blog"
-VERSION = "0.0.1"
-DESCRIPTION = "A Sphinx Blog Extension"
+NAME = "sphinxcontrib-newsfeed"
+VERSION = "0.1"
+DESCRIPTION = "News Feed extension for Sphinx"
 LONG_DESCRIPTION = open('README').read()
 AUTHOR = "Kirill Simonov (Prometheus Research, LLC)"
 AUTHOR_EMAIL = "xi@resolvent.net"
 LICENSE = "BSD"
-URL = "http://bitbucket.org/prometheus/sphinxcontrib-blog"
-DOWNLOAD_URL = "http://pypi.python.org/pypi/sphinxcontrib-blog"
+URL = "http://bitbucket.org/prometheus/sphinxcontrib-newsfeed"
+DOWNLOAD_URL = "http://pypi.python.org/pypi/sphinxcontrib-newsfeed"
 CLASSIFIERS = [
         'Development Status :: 4 - Beta',
         'Intended Audience :: Developers',

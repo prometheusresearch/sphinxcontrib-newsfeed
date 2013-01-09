@@ -1,13 +1,14 @@
-My Project News
+Elvensense News
 ===============
 
-This is a small demo for ``sphinxcontrib-blog`` extension.
-What follows is the output of ``blogtree`` directive.
+This is a small demo for ``sphinxcontrib-newsfeed`` extension.
+What follows is the output of ``feed`` directive.
 
-.. blogtree::
+.. feed::
    :rss: index.rss
-   :title: My Project News
+   :atom: index.atom
+   :title: Elvensense News
 
-   with-teaser
-   first-post
+   release
+   welcome
 

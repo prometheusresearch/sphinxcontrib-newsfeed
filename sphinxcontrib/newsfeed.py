@@ -11,11 +11,12 @@ import os.path, datetime, re
 import PyRSS2Gen
 
 
-class BlogTreeDirective(Directive):
+class FeedDirective(Directive):
 
     has_content = True
     option_spec = {
             'rss': directives.unchanged,
+            'atom': directives.unchanged,
             'title': directives.unchanged,
             'link': directives.unchanged,
             'description': directives.unchanged,
@@ -32,7 +33,7 @@ class BlogTreeDirective(Directive):
             docname = docname_join(env.docname, entry)
             if docname not in env.found_docs:
                 output.append(self.state.document.reporter.warning(
-                    'blogtree contains reference to nonexisting '
+                    'feed contains a reference to nonexisting '
                     'document %r' % docname, line=self.lineno))
                 env.note_reread()
             else:
@@ -50,9 +51,10 @@ class BlogTreeDirective(Directive):
         wrappernode = nodes.compound(classes=['toctree-wrapper'])
         wrappernode.append(subnode)
         output.append(wrappernode)
-        subnode = blogtree()
-        subnode['posts'] = includefiles
+        subnode = feed()
+        subnode['entries'] = includefiles
         subnode['rss'] = self.options.get('rss')
+        subnode['atom'] = self.options.get('atom')
         subnode['title'] = self.options.get('title', '')
         subnode['link'] = self.options.get('link', '')
         subnode['description'] = self.options.get('description', '')
@@ -60,7 +62,7 @@ class BlogTreeDirective(Directive):
         return output
 
 
-class BlogPostDirective(Directive):
+class FeedEntryDirective(Directive):
 
     option_spec = {
             'author': directives.unchanged,
@@ -80,16 +82,16 @@ class BlogPostDirective(Directive):
         else:
             return [doc.reporter.error("invalid date `%s`" % date,
                                        lineno=self.lineno)]
-        meta_node = blogmeta(classes=['blog-meta'])
+        meta_node = entrymeta(classes=['feed-meta'])
         meta_node += nodes.Text(u'Published')
         if author:
             meta_node += nodes.Text(u' by ')
-            author_node = nodes.emphasis(classes=['blog-author'])
+            author_node = nodes.emphasis(classes=['feed-author'])
             author_node += nodes.Text(author)
             meta_node += author_node
         if date:
             meta_node += nodes.Text(u' on ')
-            date_node = nodes.emphasis(classes=['blog-date'])
+            date_node = nodes.emphasis(classes=['feed-date'])
             if date.time():
                 date_node += nodes.Text(date)
             else:
@@ -100,10 +102,10 @@ class BlogPostDirective(Directive):
         return [meta_node]
 
 
-class BlogCutDirective(Directive):
+class CutDirective(Directive):
 
     def run(self):
-        return [blogcut()]
+        return [entrycut()]
 
 
 class DisqusDirective(Directive):
@@ -117,7 +119,7 @@ class DisqusDirective(Directive):
     def run(self):
         doc = self.state.document
         env = doc.settings.env
-        node = disqus(classes=['blog-disqus'])
+        node = disqus(classes=['feed-disqus'])
         if 'shortname' in self.options:
             node['shortname'] = self.options['shortname']
         else:
@@ -134,15 +136,15 @@ class DisqusDirective(Directive):
         return [node]
 
 
-class blogtree(nodes.General, nodes.Element):
+class feed(nodes.General, nodes.Element):
     pass
 
 
-class blogmeta(nodes.paragraph):
+class entrymeta(nodes.paragraph):
     pass
 
 
-class blogcut(nodes.General, nodes.Element):
+class entrycut(nodes.General, nodes.Element):
     pass
 
 
@@ -150,15 +152,15 @@ class disqus(nodes.General, nodes.Element):
     pass
 
 
-def visit_blogmeta(self, node):
+def visit_entrymeta(self, node):
     self.visit_paragraph(node)
 
 
-def depart_blogmeta(self, node):
+def depart_entrymeta(self, node):
     self.depart_paragraph(node)
 
 
-def visit_blogcut(self, node):
+def visit_entrycut(self, node):
     raise nodes.SkipNode
 
 
@@ -202,30 +204,30 @@ def visit_disqus(self, node):
     raise nodes.SkipNode
 
 
-def process_blogtree(app, doctree, fromdocname):
+def process_feed(app, doctree, fromdocname):
     env = app.builder.env
-    if env.config.disqus_shortname and doctree.traverse(blogmeta):
-        node = disqus(classes=['blog-disqus'])
+    if env.config.disqus_shortname and doctree.traverse(entrymeta):
+        node = disqus(classes=['feed-disqus'])
         node['shortname'] = env.config.disqus_shortname
         node['identifier'] = "/%s" % fromdocname
         node['title'] = env.titles[fromdocname][0]
         node['developer'] = env.config.disqus_developer
         doctree += node
-    for node in doctree.traverse(blogtree):
+    for node in doctree.traverse(feed):
         rss_output = node['rss']
         rss_title = node['title']
         rss_link = node['link']
         rss_description = node['description']
         rss_items = []
         replacement = []
-        for docname in node['posts']:
-            blogpost = env.get_doctree(docname)
-            for meta in blogpost.traverse(blogmeta):
+        for docname in node['entries']:
+            entry = env.get_doctree(docname)
+            for meta in entry.traverse(entrymeta):
                 section_node = nodes.section()
                 title = env.titles[docname]
-                section_node['ids'] = blogpost[0]['ids']
+                section_node['ids'] = entry[0]['ids']
                 title_node = nodes.title()
-                ref_node = nodes.reference(classes=['blog-ref'])
+                ref_node = nodes.reference(classes=['feed-ref'])
                 ref_node['internal'] = True
                 ref_node['refdocname'] = docname
                 ref_node['refuri'] = \
@@ -234,12 +236,12 @@ def process_blogtree(app, doctree, fromdocname):
                 ref_node += title[0]
                 title_node += ref_node
                 section_node += title_node
-                for subnode in blogpost[0]:
+                for subnode in entry[0]:
                     if isinstance(subnode, (nodes.title, disqus)):
                         continue
-                    if isinstance(subnode, blogcut):
+                    if isinstance(subnode, entrycut):
                         para_node = nodes.paragraph()
-                        ref_node = nodes.reference(classes=['blog-more'])
+                        ref_node = nodes.reference(classes=['feed-more'])
                         ref_node['internal'] = True
                         ref_node['refdocname'] = docname
                         ref_node['refuri'] = \
@@ -256,10 +258,10 @@ def process_blogtree(app, doctree, fromdocname):
                     rss_item_title = title[0]
                     rss_item_link = rss_link+app.builder.get_target_uri(docname)
                     rss_item_description = nodes.compound()
-                    for subnode in blogpost[0]:
-                        if isinstance(subnode, (nodes.title, blogmeta, disqus)):
+                    for subnode in entry[0]:
+                        if isinstance(subnode, (nodes.title, entrymeta, disqus)):
                             continue
-                        if isinstance(subnode, blogcut):
+                        if isinstance(subnode, entrycut):
                             break
                         rss_item_description += subnode.deepcopy()
                     env.resolve_references(rss_item_description, docname,
@@ -289,17 +291,17 @@ def process_blogtree(app, doctree, fromdocname):
 def setup(app):
     app.add_config_value('disqus_shortname', None, 'env')
     app.add_config_value('disqus_developer', False, 'env')
-    app.add_directive('blogtree', BlogTreeDirective)
-    app.add_directive('blogpost', BlogPostDirective)
-    app.add_directive('blogcut', BlogCutDirective)
+    app.add_directive('feed', FeedDirective)
+    app.add_directive('feed-entry', FeedEntryDirective)
+    app.add_directive('cut', CutDirective)
     app.add_directive('disqus', DisqusDirective)
-    app.add_node(blogtree)
-    app.add_node(blogmeta,
-                 html=(visit_blogmeta, depart_blogmeta))
-    app.add_node(blogcut,
-                 html=(visit_blogcut, None))
+    app.add_node(feed)
+    app.add_node(entrymeta,
+                 html=(visit_entrymeta, depart_entrymeta))
+    app.add_node(entrycut,
+                 html=(visit_entrycut, None))
     app.add_node(disqus,
                  html=(visit_disqus, None))
-    app.connect('doctree-resolved', process_blogtree)
+    app.connect('doctree-resolved', process_feed)
 
 

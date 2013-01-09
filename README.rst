@@ -1,17 +1,18 @@
-*****************************************************
-  ``sphinxcontrib-blog`` -- A Sphinx Blog Extension
-*****************************************************
+****************************************************************
+  ``sphinxcontrib-newsfeed`` -- News Feed extension for Sphinx
+****************************************************************
 
 Overview
 ========
 
-``sphinxcontrib-blog`` is a extension for adding a simple *Blog*, *News*
-or *Announcements*  section to a Sphinx_ website.
+``sphinxcontrib-newsfeed`` is a extension for adding a simple *Blog*,
+*News* or *Announcements*  section to a Sphinx_ website.
 
 Features:
 
-* Makes blog posts from Sphinx documents.
-* Generates a list of blog posts with teasers and an RSS feed.
+* Makes feed entries from Sphinx documents.
+* Generates a list of entries with teasers.
+* Writes the feed in RSS/Atom format.
 * Supports comments via Disqus_.
 
 You can see this extension in action at http://htsql.org/blog/.
@@ -23,62 +24,72 @@ and released under BSD license.
 Usage
 =====
 
-To use this extension with your Sphinx website, add the following line
-to ``conf.py``::
+To enable this extension, add the following line to ``conf.py``::
 
-    extensions.append('sphinxcontrib.blog')
+    extensions.append('sphinxcontrib.newsfeed')
 
-To enable comments, you also need to specify the Disqus_ website
-identifier::
+To add a comment form to news entries, you also need to specify the
+Disqus_ website identifier::
 
     disqus_shortname = '...'
 
-Now you can make a blog post from any Sphinx document by adding
-directive ``blogpost``.  For example::
+Now you can convert any Sphinx document to a news entry by using
+directive ``feed-entry``.  For example::
 
-    First Post!!!
-    =============
+    Welcome!!!
+    ==========
 
-    .. blogpost::
-       :date: 2013-01-01
+    .. feed-entry::
+       :date: 2012-01-01
 
-    Welcome to my new blog!!!
+    Welcome to the news feed of **Elvensense**.  Here we will post
+    release announcements and other project news.
 
-Use ``blogcut`` directive to separate the post teaser from the content::
+Use ``cut`` directive to separate the entry teaser from the content::
 
-    Post with a Teaser
-    ==================
+    Elvensense 96 is released
+    =========================
 
-    .. blogpost::
-       :date: 2013-02-02
+    .. feed-entry::
+       :date: 2012-12-31
 
-    Place summary here.
+    We are proud to announce a new release of **Elvensense**.
 
-    .. blogcut::
+    .. cut::
 
-    Here is the main body of the post.
+    Specific changes since the last release:
 
-To make a list of blog posts and generate an RSS feed, use ``blogtree``
-directive::
+    * An exciting feature was added.
+    * An annoying bug was fixed.
 
-    .. blogtree::
+
+To make a list of news entries and generate an RSS or Atom feed, use
+``feed`` directive::
+
+    .. feed::
        :rss: index.rss
-       :title: My Project News
+       :atom: index.atom
+       :title: Elvensense News
 
-       with-teaser
-       first-post
+       release
+       welcome
 
-The ``blogtree`` body should contain a list of documents (just like
-``toctree``).
+The body of ``feed`` directive must list documents containing news
+entries (similar to ``toctree``).  The options of ``feed`` directive
+define the location of RSS and Atom files and describe the feed
+metadata.
 
-The ``blogtree`` options specify the name of the RSS feed file and RSS
-metadata.  You need to manually add a link to the RSS feed to your
-templates::
+You need to manually update your HTML templates to add links to RSS and
+Atom feeds:
 
       <link rel="alternate"
             type="application/rss+xml"
-            title="My Project News"
+            title="Elvensense News"
             href="/index.rss" />
+      <link rel="alternate"
+            type="application/atom+xml"
+            title="Elvensense News"
+            href="/index.atom" />
 
 
 Reference
@@ -87,8 +98,8 @@ Reference
 Directives
 ----------
 
-``blogpost``
-    Inserts the post metadata.
+``feed-entry``
+    Specifies an entry metadata.
 
     This directive has no body.
 
@@ -99,25 +110,28 @@ Directives
     ``date``
         The date of the post in ``YYYY-MM-DD`` format.
 
-``blogtree``
-    Inserts a list of blog posts with teasers at the current location.
+``feed``
+    Inserts a list of entries with teasers at the current location.
 
     This directive should contain a list of document names (similar to
-    ``toctree``).
+    ``toctree``).  This directive adds the documents to the hierarchy,
+    so that you don't need to add the to ``toctree``.
 
     Options:
 
     ``rss``
         Where to write the RSS feed (optional).
+    ``atom``
+        Where to write the Atom feed (optional).
     ``title``
-        The name of the blog (for RSS metadata).
+        The name of the feed (for RSS/Atom metadata).
     ``description``
-        The description of the blog (for RSS metadata).
+        The description of the feed (for RSS/Atom metadata).
     ``link``
-        The URL of the blog (for RSS metadata).
+        The URL of the feed (for RSS/Atom metadata).
 
-``blogcut``
-    Separates the post teaser from the main body of the post.
+``cut``
+    Separates the entry teaser from the main body.
 
     This directive has no options and no body.
 
@@ -126,7 +140,7 @@ Directives
 
     Normally you don't need to use this directive since if
     ``disqus_shortname`` parameter is set, Disqus comments are included
-    automatically with every blog post.  This directive allows you to
+    automatically with every feed entry.  This directive allows you to
     use Disqus with regular Sphinx documents.
 
     Options:
@@ -152,22 +166,22 @@ Configuration parameters
 CSS classes
 -----------
 
-``blog-meta``
+``feed-meta``
     Wraps for the post metadata block.
 
-``blog-author``
+``feed-author``
     Wraps the author name.
 
-``blog-date``
+``feed-date``
     Wraps the post date.
 
-``blog-disqus``
+``feed-disqus``
     Wraps the Disqus comment widget.
 
-``blog-ref``
+``feed-ref``
     Wraps the post title in the list of posts.
 
-``blog-more``
+``feed-more``
     Wraps the *Read more...* link.
 
 
