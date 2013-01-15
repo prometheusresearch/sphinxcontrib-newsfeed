@@ -12,7 +12,7 @@ Features:
 
 * Makes feed entries from Sphinx documents.
 * Generates a list of entries with teasers.
-* Writes the feed in RSS/Atom format.
+* Saves the feed to a file in RSS format.
 * Supports comments via Disqus_.
 
 You can see this extension in action at http://htsql.org/blog/.
@@ -63,12 +63,11 @@ Use ``cut`` directive to separate the entry teaser from the content::
     * An annoying bug was fixed.
 
 
-To make a list of news entries and generate an RSS or Atom feed, use
-``feed`` directive::
+To make a list of news entries and generate an RSS file, use ``feed``
+directive::
 
     .. feed::
        :rss: index.rss
-       :atom: index.atom
        :title: Elvensense News
 
        release
@@ -76,20 +75,15 @@ To make a list of news entries and generate an RSS or Atom feed, use
 
 The body of ``feed`` directive must list documents containing news
 entries (similar to ``toctree``).  The options of ``feed`` directive
-define the location of RSS and Atom files and describe the feed
-metadata.
+define the name of the RSS file and describe the feed metadata.
 
-You need to manually update your HTML templates to add links to RSS and
-Atom feeds:
+You need to manually update your HTML templates to add a link to the RSS
+feed::
 
       <link rel="alternate"
             type="application/rss+xml"
             title="Elvensense News"
             href="/index.rss" />
-      <link rel="alternate"
-            type="application/atom+xml"
-            title="Elvensense News"
-            href="/index.atom" />
 
 
 Reference
@@ -121,27 +115,25 @@ Directives
 
     ``rss``
         Where to write the RSS feed (optional).
-    ``atom``
-        Where to write the Atom feed (optional).
     ``title``
-        The name of the feed (for RSS/Atom metadata).
+        The name of the RSS channel.
     ``description``
-        The description of the feed (for RSS/Atom metadata).
+        Description of the RSS channel.
     ``link``
-        The URL of the feed (for RSS/Atom metadata).
+        The website URL.
 
 ``cut``
-    Separates the entry teaser from the main body.
+    Separates the entry teaser from the rest of the text.
 
     This directive has no options and no body.
 
 ``disqus``
     Inserts a Disqus_ comment widget.
 
-    Normally you don't need to use this directive since if
-    ``disqus_shortname`` parameter is set, Disqus comments are included
-    automatically with every feed entry.  This directive allows you to
-    use Disqus with regular Sphinx documents.
+    Normally you don't need to use this directive for news entries
+    since, if ``disqus_shortname`` parameter is set, Disqus comment form
+    is encluded automatically with every feed entry.  This directive
+    allows you to use Disqus with regular Sphinx documents.
 
     Options:
 

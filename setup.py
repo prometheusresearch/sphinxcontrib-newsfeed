@@ -25,7 +25,7 @@ CLASSIFIERS = [
         'Topic :: Text Processing',
 ]
 PLATFORMS = 'any'
-REQUIRES = ['Sphinx', 'PyRSS2Gen']
+REQUIRES = ['Sphinx']
 PACKAGES = ['sphinxcontrib']
 ZIP_SAFE = False
 INCLUDE_PACKAGE_DATA = True

@@ -7,5 +7,6 @@ project = u'Elvensense'
 master_doc = 'index'
 html_theme = 'sphinxdoc'
 highlight_language = 'rest'
-exclude_patterns = ['_build']
+templates_path = ['_templates']
+exclude_patterns = ['_build', '_templates']
 

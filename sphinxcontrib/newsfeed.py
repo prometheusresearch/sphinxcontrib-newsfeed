@@ -7,8 +7,7 @@ from docutils import nodes
 from docutils.parsers.rst import Directive, directives
 from sphinx import addnodes
 from sphinx.util import docname_join
-import os.path, datetime, re
-import PyRSS2Gen
+import os.path, datetime, collections
 
 
 class FeedDirective(Directive):
@@ -16,7 +15,6 @@ class FeedDirective(Directive):
     has_content = True
     option_spec = {
             'rss': directives.unchanged,
-            'atom': directives.unchanged,
             'title': directives.unchanged,
             'link': directives.unchanged,
             'description': directives.unchanged,
@@ -54,10 +52,9 @@ class FeedDirective(Directive):
         subnode = feed()
         subnode['entries'] = includefiles
         subnode['rss'] = self.options.get('rss')
-        subnode['atom'] = self.options.get('atom')
-        subnode['title'] = self.options.get('title', '')
-        subnode['link'] = self.options.get('link', '')
-        subnode['description'] = self.options.get('description', '')
+        subnode['title'] = unicode(self.options.get('title', ''))
+        subnode['link'] = unicode(self.options.get('link', ''))
+        subnode['description'] = unicode(self.options.get('description', ''))
         output.append(subnode)
         return output
 
@@ -92,10 +89,10 @@ class FeedEntryDirective(Directive):
         if date:
             meta_node += nodes.Text(u' on ')
             date_node = nodes.emphasis(classes=['feed-date'])
-            if date.time():
-                date_node += nodes.Text(date)
-            else:
+            if not date.time():
                 date_node += nodes.Text(date.date())
+            else:
+                date_node += nodes.Text(date)
             meta_node += date_node
         meta_node['author'] = author
         meta_node['date'] = date
@@ -214,10 +211,11 @@ def process_feed(app, doctree, fromdocname):
         node['developer'] = env.config.disqus_developer
         doctree += node
     for node in doctree.traverse(feed):
-        rss_output = node['rss']
+        rss_filename = node['rss']
         rss_title = node['title']
         rss_link = node['link']
         rss_description = node['description']
+        rss_date = datetime.datetime.utcnow()
         rss_items = []
         replacement = []
         for docname in node['entries']:
@@ -236,6 +234,9 @@ def process_feed(app, doctree, fromdocname):
                 ref_node += title[0]
                 title_node += ref_node
                 section_node += title_node
+                rss_item_title = unicode(title[0])
+                rss_item_link = rss_link+app.builder.get_target_uri(docname)
+                rss_item_description = nodes.compound()
                 for subnode in entry[0]:
                     if isinstance(subnode, (nodes.title, disqus)):
                         continue
@@ -252,40 +253,77 @@ def process_feed(app, doctree, fromdocname):
                         section_node += para_node
                         break
                     section_node += subnode.deepcopy()
+                    if isinstance(subnode, entrymeta):
+                        continue
+                    rss_item_description += subnode.deepcopy()
                 env.resolve_references(section_node, fromdocname, app.builder)
                 replacement.append(section_node)
-                if rss_output:
-                    rss_item_title = title[0]
-                    rss_item_link = rss_link+app.builder.get_target_uri(docname)
-                    rss_item_description = nodes.compound()
-                    for subnode in entry[0]:
-                        if isinstance(subnode, (nodes.title, entrymeta, disqus)):
-                            continue
-                        if isinstance(subnode, entrycut):
-                            break
-                        rss_item_description += subnode.deepcopy()
-                    env.resolve_references(rss_item_description, docname,
-                                           app.builder)
-                    rss_item_description = app.builder.render_partial(
-                                                    rss_item_description)['body']
-                    rss_item_date = meta['date']
-                    rss_item = PyRSS2Gen.RSSItem(
-                            title = rss_item_title,
-                            link = rss_item_link,
-                            description = rss_item_description,
-                            guid = PyRSS2Gen.Guid(rss_item_link),
-                            pubDate = rss_item_date)
-                    rss_items.append(rss_item)
+                env.resolve_references(rss_item_description, docname, app.builder)
+                rss_item_description = app.builder.render_partial(
+                                                rss_item_description)['body']
+                rss_item_date = meta['date']
+                rss_item = RSSItem(rss_item_title, rss_item_link,
+                                   rss_item_description, rss_item_date)
+                rss_items.append(rss_item)
         node.replace_self(replacement)
-        if rss_output:
-            rss_path = os.path.join(app.builder.outdir, rss_output)
-            rss = PyRSS2Gen.RSS2(
-                    title = rss_title,
-                    link = rss_link,
-                    description = rss_description,
-                    lastBuildDate = datetime.datetime.utcnow(),
-                    items = rss_items)
-            rss.write_xml(open(rss_path, "w"), encoding="utf-8")
+        rss_feed = RSSFeed(rss_title, rss_link, rss_description,
+                           rss_date, rss_items)
+        if rss_filename:
+            rss_path = os.path.join(app.builder.outdir, rss_filename)
+            rss_stream = open(rss_path, 'wb')
+            write_rss(rss_feed, rss_stream)
+            rss_stream.close()
+
+
+RSSFeed = collections.namedtuple('RSSFeed',
+        ['title', 'link', 'description', 'date', 'items'])
+RSSItem = collections.namedtuple('RSSItem',
+        ['title', 'link', 'description', 'date'])
+
+
+def format_text(text):
+    if isinstance(text, unicode):
+        text = text.encode('utf-8')
+    return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+
+def format_date(date):
+    return "%s, %02d %s %04d %02d:%02d:%02d GMT" % (
+            ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")[date.weekday()],
+            date.day,
+            ("Jan", "Feb", "Mar", "Apr", "May", "Jun",
+             "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")[date.month-1],
+                                date.year, date.hour, date.minute, date.second)
+
+
+def write_rss(rss_feed, stream):
+    stream.write('''<?xml version="1.0" encoding="utf-8"?>\n''')
+    stream.write('''<rss version="2.0">\n''')
+    stream.write('''  <channel>\n''')
+    stream.write('''    <title>%s</title>\n'''
+            % format_text(rss_feed.title))
+    stream.write('''    <link>%s</link>\n'''
+            % format_text(rss_feed.link))
+    stream.write('''    <description>%s</description>\n'''
+            % format_text(rss_feed.description))
+    stream.write('''    <lastBuildDate>%s</lastBuildDate>\n'''
+            % format_date(rss_feed.date))
+    stream.write('''    <generator>sphinxcontrib-newsfeed</generator>\n''')
+    for item in rss_feed.items:
+        stream.write('''    <item>\n''')
+        stream.write('''      <title>%s</title>\n'''
+                % format_text(item.title))
+        stream.write('''      <link>%s</link>\n'''
+                % format_text(item.link))
+        stream.write('''      <description>%s</description>\n'''
+                % format_text(item.description))
+        stream.write('''      <guid>%s</guid>\n'''
+                % format_text(item.link))
+        stream.write('''      <pubDate>%s</pubDate>\n'''
+                % format_date(item.date))
+        stream.write('''    </item>\n''')
+    stream.write('''  </channel>\n''')
+    stream.write('''</rss>\n''')
 
 
 def setup(app):

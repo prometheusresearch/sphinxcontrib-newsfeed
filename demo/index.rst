@@ -6,8 +6,8 @@ What follows is the output of ``feed`` directive.
 
 .. feed::
    :rss: index.rss
-   :atom: index.atom
    :title: Elvensense News
+   :link: http://example.com/
 
    release
    welcome
