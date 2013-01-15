@@ -3,11 +3,12 @@
 #
 
 
+from __future__ import unicode_literals
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
 from sphinx import addnodes
 from sphinx.util import docname_join
-import os.path, datetime, collections
+import sys, os.path, datetime, collections
 
 
 class FeedDirective(Directive):
@@ -52,9 +53,9 @@ class FeedDirective(Directive):
         subnode = feed()
         subnode['entries'] = includefiles
         subnode['rss'] = self.options.get('rss')
-        subnode['title'] = unicode(self.options.get('title', ''))
-        subnode['link'] = unicode(self.options.get('link', ''))
-        subnode['description'] = unicode(self.options.get('description', ''))
+        subnode['title'] = self.options.get('title', '')
+        subnode['link'] = self.options.get('link', '')
+        subnode['description'] = self.options.get('description', '')
         output.append(subnode)
         return output
 
@@ -80,14 +81,14 @@ class FeedEntryDirective(Directive):
             return [doc.reporter.error("invalid date `%s`" % date,
                                        lineno=self.lineno)]
         meta_node = entrymeta(classes=['feed-meta'])
-        meta_node += nodes.Text(u'Published')
+        meta_node += nodes.Text('Published')
         if author:
-            meta_node += nodes.Text(u' by ')
+            meta_node += nodes.Text(' by ')
             author_node = nodes.emphasis(classes=['feed-author'])
             author_node += nodes.Text(author)
             meta_node += author_node
         if date:
-            meta_node += nodes.Text(u' on ')
+            meta_node += nodes.Text(' on ')
             date_node = nodes.emphasis(classes=['feed-date'])
             if not date.time():
                 date_node += nodes.Text(date.date())
@@ -234,7 +235,7 @@ def process_feed(app, doctree, fromdocname):
                 ref_node += title[0]
                 title_node += ref_node
                 section_node += title_node
-                rss_item_title = unicode(title[0])
+                rss_item_title = "%s" % title[0]
                 rss_item_link = rss_link+app.builder.get_target_uri(docname)
                 rss_item_description = nodes.compound()
                 for subnode in entry[0]:
@@ -248,7 +249,7 @@ def process_feed(app, doctree, fromdocname):
                         ref_node['refuri'] = \
                                 app.builder.get_relative_uri(fromdocname, docname)
                         ref_node['refuri'] += '#' + section_node['ids'][0]
-                        ref_node += nodes.Text(u'Read more\u2026')
+                        ref_node += nodes.Text('Read more\u2026')
                         para_node += ref_node
                         section_node += para_node
                         break
@@ -282,8 +283,6 @@ RSSItem = collections.namedtuple('RSSItem',
 
 
 def format_text(text):
-    if isinstance(text, unicode):
-        text = text.encode('utf-8')
     return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
 
 
@@ -297,33 +296,36 @@ def format_date(date):
 
 
 def write_rss(rss_feed, stream):
-    stream.write('''<?xml version="1.0" encoding="utf-8"?>\n''')
-    stream.write('''<rss version="2.0">\n''')
-    stream.write('''  <channel>\n''')
-    stream.write('''    <title>%s</title>\n'''
+    lines = []
+    lines.append('''<?xml version="1.0" encoding="utf-8"?>\n''')
+    lines.append('''<rss version="2.0">\n''')
+    lines.append('''  <channel>\n''')
+    lines.append('''    <title>%s</title>\n'''
             % format_text(rss_feed.title))
-    stream.write('''    <link>%s</link>\n'''
+    lines.append('''    <link>%s</link>\n'''
             % format_text(rss_feed.link))
-    stream.write('''    <description>%s</description>\n'''
+    lines.append('''    <description>%s</description>\n'''
             % format_text(rss_feed.description))
-    stream.write('''    <lastBuildDate>%s</lastBuildDate>\n'''
+    lines.append('''    <lastBuildDate>%s</lastBuildDate>\n'''
             % format_date(rss_feed.date))
-    stream.write('''    <generator>sphinxcontrib-newsfeed</generator>\n''')
+    lines.append('''    <generator>sphinxcontrib-newsfeed</generator>\n''')
     for item in rss_feed.items:
-        stream.write('''    <item>\n''')
-        stream.write('''      <title>%s</title>\n'''
+        lines.append('''    <item>\n''')
+        lines.append('''      <title>%s</title>\n'''
                 % format_text(item.title))
-        stream.write('''      <link>%s</link>\n'''
+        lines.append('''      <link>%s</link>\n'''
                 % format_text(item.link))
-        stream.write('''      <description>%s</description>\n'''
+        lines.append('''      <description>%s</description>\n'''
                 % format_text(item.description))
-        stream.write('''      <guid>%s</guid>\n'''
+        lines.append('''      <guid>%s</guid>\n'''
                 % format_text(item.link))
-        stream.write('''      <pubDate>%s</pubDate>\n'''
+        lines.append('''      <pubDate>%s</pubDate>\n'''
                 % format_date(item.date))
-        stream.write('''    </item>\n''')
-    stream.write('''  </channel>\n''')
-    stream.write('''</rss>\n''')
+        lines.append('''    </item>\n''')
+    lines.append('''  </channel>\n''')
+    lines.append('''</rss>\n''')
+    for line in lines:
+        stream.write(line.encode('utf-8'))
 
 
 def setup(app):
@@ -340,6 +342,6 @@ def setup(app):
                  html=(visit_entrycut, None))
     app.add_node(disqus,
                  html=(visit_disqus, None))
-    app.connect('doctree-resolved', process_feed)
+    app.connect(str('doctree-resolved'), process_feed)
 
 

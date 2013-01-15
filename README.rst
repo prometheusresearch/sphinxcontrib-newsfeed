@@ -80,10 +80,10 @@ define the name of the RSS file and describe the feed metadata.
 You need to manually update your HTML templates to add a link to the RSS
 feed::
 
-      <link rel="alternate"
-            type="application/rss+xml"
-            title="Elvensense News"
-            href="/index.rss" />
+    <link rel="alternate"
+          type="application/rss+xml"
+          title="Elvensense News"
+          href="/index.rss" />
 
 
 Reference

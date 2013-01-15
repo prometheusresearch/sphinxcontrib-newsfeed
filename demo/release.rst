@@ -1,10 +1,10 @@
-Elvensense 96 is released
+Elvënsense 96 is released
 =========================
 
 .. feed-entry::
    :date: 2012-12-31
 
-We are proud to announce a new release of **Elvensense**.
+We are proud to announce a new release of **Elvënsense**.
 
 .. cut::
 

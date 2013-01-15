@@ -3,7 +3,7 @@
 extensions = ['sphinxcontrib.newsfeed']
 
 # Standard configuration.
-project = u'Elvensense'
+project = u'Elvënsense'
 master_doc = 'index'
 html_theme = 'sphinxdoc'
 highlight_language = 'rest'
