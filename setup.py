@@ -7,7 +7,7 @@ from setuptools import setup
 
 
 NAME = "sphinxcontrib-newsfeed"
-VERSION = "0.1"
+VERSION = "0.1.1"
 DESCRIPTION = "News Feed extension for Sphinx"
 LONG_DESCRIPTION = open('README').read()
 AUTHOR = "Kirill Simonov (Prometheus Research, LLC)"

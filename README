@@ -15,7 +15,8 @@ Features:
 * Saves the feed to a file in RSS format.
 * Supports comments via Disqus_.
 
-You can see this extension in action at http://htsql.org/blog/.
+You can see this extension in action at http://htsql.org/blog/.  For
+more examples, see ``demo`` directory in the source distribution.
 
 This software is written by Kirill Simonov (`Prometheus Research, LLC`_)
 and released under BSD license.
