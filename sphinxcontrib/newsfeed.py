@@ -202,6 +202,10 @@ def visit_disqus(self, node):
     raise nodes.SkipNode
 
 
+def visit_skip(self, node):
+    raise nodes.SkipNode
+
+
 def process_feed(app, doctree, fromdocname):
     env = app.builder.env
     if env.config.disqus_shortname and doctree.traverse(entrymeta):
@@ -260,20 +264,22 @@ def process_feed(app, doctree, fromdocname):
                 env.resolve_references(section_node, fromdocname, app.builder)
                 replacement.append(section_node)
                 env.resolve_references(rss_item_description, docname, app.builder)
-                rss_item_description = app.builder.render_partial(
-                                                rss_item_description)['body']
-                rss_item_date = meta['date']
-                rss_item = RSSItem(rss_item_title, rss_item_link,
-                                   rss_item_description, rss_item_date)
-                rss_items.append(rss_item)
+                if app.builder.format == 'html':
+                    rss_item_description = app.builder.render_partial(
+                                                    rss_item_description)['body']
+                    rss_item_date = meta['date']
+                    rss_item = RSSItem(rss_item_title, rss_item_link,
+                                       rss_item_description, rss_item_date)
+                    rss_items.append(rss_item)
         node.replace_self(replacement)
-        rss_feed = RSSFeed(rss_title, rss_link, rss_description,
-                           rss_date, rss_items)
-        if rss_filename:
-            rss_path = os.path.join(app.builder.outdir, rss_filename)
-            rss_stream = open(rss_path, 'wb')
-            write_rss(rss_feed, rss_stream)
-            rss_stream.close()
+        if app.builder.format == 'html':
+            rss_feed = RSSFeed(rss_title, rss_link, rss_description,
+                               rss_date, rss_items)
+            if rss_filename:
+                rss_path = os.path.join(app.builder.outdir, rss_filename)
+                rss_stream = open(rss_path, 'wb')
+                write_rss(rss_feed, rss_stream)
+                rss_stream.close()
 
 
 RSSFeed = collections.namedtuple('RSSFeed',
@@ -337,11 +343,17 @@ def setup(app):
     app.add_directive('disqus', DisqusDirective)
     app.add_node(feed)
     app.add_node(entrymeta,
-                 html=(visit_entrymeta, depart_entrymeta))
+                 html=(visit_entrymeta, depart_entrymeta),
+                 latex=(visit_entrymeta, depart_entrymeta),
+                 text=(visit_entrymeta, depart_entrymeta))
     app.add_node(entrycut,
-                 html=(visit_entrycut, None))
+                 html=(visit_entrycut, None),
+                 latex=(visit_entrycut, None),
+                 text=(visit_entrycut, None))
     app.add_node(disqus,
-                 html=(visit_disqus, None))
+                 html=(visit_disqus, None),
+                 latex=(visit_skip, None),
+                 text=(visit_skip, None))
     app.connect(str('doctree-resolved'), process_feed)
 
 
