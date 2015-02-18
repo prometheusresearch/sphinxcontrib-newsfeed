@@ -7,7 +7,7 @@ from setuptools import setup
 
 
 NAME = "sphinxcontrib-newsfeed"
-VERSION = "0.1.2"
+VERSION = "0.1.3"
 DESCRIPTION = "News Feed extension for Sphinx"
 LONG_DESCRIPTION = open('README').read()
 AUTHOR = "Kirill Simonov (Prometheus Research, LLC)"
@@ -25,7 +25,7 @@ CLASSIFIERS = [
         'Topic :: Text Processing',
 ]
 PLATFORMS = 'any'
-REQUIRES = ['Sphinx']
+INSTALL_REQUIRES = ['Sphinx']
 PACKAGES = ['sphinxcontrib']
 ZIP_SAFE = False
 INCLUDE_PACKAGE_DATA = True
@@ -43,7 +43,7 @@ setup(name=NAME,
       download_url=DOWNLOAD_URL,
       classifiers=CLASSIFIERS,
       platforms=PLATFORMS,
-      requires=REQUIRES,
+      install_requires=INSTALL_REQUIRES,
       packages=PACKAGES,
       zip_safe=ZIP_SAFE,
       include_package_data=INCLUDE_PACKAGE_DATA,
